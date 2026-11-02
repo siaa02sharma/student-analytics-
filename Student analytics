@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Student Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f6fa;--surface:#fff;--ink:#17233d;--muted:#5d6b85;--line:#d9dfeb;--accent:#0f8b8d;--bad:#d9482b;--good:#2e9e5b;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1626;--surface:#18223a;--ink:#eaf0ff;--muted:#9aa8c7;--line:#2b3858;--accent:#3cc7c9;--bad:#ff7a5c;--good:#58d68d;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1626;--surface:#18223a;--ink:#eaf0ff;--muted:#9aa8c7;--line:#2b3858;--accent:#3cc7c9;--bad:#ff7a5c;--good:#58d68d;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:960px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:clamp(1.8rem,6vw,2.8rem);font-weight:800;letter-spacing:-.02em;margin:0 0 4px}
+.sub{color:var(--muted);margin:0 0 20px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
+.stat b{display:block;font-size:1.6rem;font-weight:800}
+.stat span{color:var(--muted);font-size:.85rem}
+section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:20px}
+h2{font-size:1.1rem;margin:0 0 12px}
+form{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;align-items:end}
+label{font-size:.85rem;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+input{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%}
+input:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+button{font:inherit;font-weight:600;padding:10px 14px;border:0;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer}
+button.ghost{background:transparent;color:var(--bad);padding:4px 8px}
+.msg{color:var(--bad);font-size:.9rem;min-height:1.3em;margin:8px 0 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:.85rem;color:var(--muted);font-weight:600;cursor:pointer}
+td.low{color:var(--bad);font-weight:600}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.8rem;font-weight:600;background:var(--line)}
+.pill.pass{background:color-mix(in srgb,var(--good) 22%,transparent);color:var(--good)}
+.pill.fail{background:color-mix(in srgb,var(--bad) 22%,transparent);color:var(--bad)}
+.empty{color:var(--muted);padding:12px 0}
+svg text{fill:var(--muted);font:12px "Bricolage Grotesque",system-ui,sans-serif}
+</style>
