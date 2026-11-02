@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Student Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f6fa;--surface:#fff;--ink:#17233d;--muted:#5d6b85;--line:#d9dfeb;--accent:#0f8b8d;--bad:#d9482b;--good:#2e9e5b;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1626;--surface:#18223a;--ink:#eaf0ff;--muted:#9aa8c7;--line:#2b3858;--accent:#3cc7c9;--bad:#ff7a5c;--good:#58d68d;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1626;--surface:#18223a;--ink:#eaf0ff;--muted:#9aa8c7;--line:#2b3858;--accent:#3cc7c9;--bad:#ff7a5c;--good:#58d68d;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:960px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:clamp(1.8rem,6vw,2.8rem);font-weight:800;letter-spacing:-.02em;margin:0 0 4px}
+.sub{color:var(--muted);margin:0 0 20px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
+.stat b{display:block;font-size:1.6rem;font-weight:800}
+.stat span{color:var(--muted);font-size:.85rem}
+section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:20px}
+h2{font-size:1.1rem;margin:0 0 12px}
+form{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;align-items:end}
+label{font-size:.85rem;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+input{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%}
+input:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+button{font:inherit;font-weight:600;padding:10px 14px;border:0;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer}
+button.ghost{background:transparent;color:var(--bad);padding:4px 8px}
+.msg{color:var(--bad);font-size:.9rem;min-height:1.3em;margin:8px 0 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:.85rem;color:var(--muted);font-weight:600;cursor:pointer}
+td.low{color:var(--bad);font-weight:600}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.8rem;font-weight:600;background:var(--line)}
+.pill.pass{background:color-mix(in srgb,var(--good) 22%,transparent);color:var(--good)}
+.pill.fail{background:color-mix(in srgb,var(--bad) 22%,transparent);color:var(--bad)}
+.empty{color:var(--muted);padding:12px 0}
+svg text{fill:var(--muted);font:12px "Bricolage Grotesque",system-ui,sans-serif}
+</style>
+</head>
+<body>
+<main>
+<h1>Student analytics</h1>
+<p class="sub">Add marks out of 100. Results update instantly. Pass mark is 40 per subject.</p>
+
+<div class="stats" id="stats"></div>
+
+<section>
+<h2>Add a student</h2>
+<form id="f">
+<label>Name<input id="name" required maxlength="40"></label>
+<label>DBMS<input type="number" min="0" max="100" required></label>
+<label>Web Dev<input type="number" min="0" max="100" required></label>
+<label>Python<input type="number" min="0" max="100" required></label>
+<label>Networks<input type="number" min="0" max="100" required></label>
+<label>Maths<input type="number" min="0" max="100" required></label>
+<button type="submit">Add student</button>
+</form>
+<p class="msg" id="msg" role="alert"></p>
+</section>
+
+<section>
+<h2>Subject averages</h2>
+<div class="scroll"><svg id="chart" viewBox="0 0 600 220" width="100%" role="img" aria-label="Average marks per subject"></svg></div>
+</section>
+
+<section>
+<h2>Students</h2>
+<div class="scroll"><table><thead><tr id="head"></tr></thead><tbody id="rows"></tbody></table></div>
+<p class="empty" id="empty" hidden>No students yet. Add one above.</p>
+</section>
+</main>
+
+<script>
+const SUBJ=["DBMS","Web Dev","Python","Networks","Maths"],PASS=40;
+let students=[{n:"Anita",m:[82,90,76,68,71]},{n:"Riya",m:[91,88,95,84,79]},{n:"Pooja",m:[55,62,48,39,52]},{n:"Meena",m:[67,74,70,61,58]},{n:"Kavya",m:[44,51,38,47,42]}];
+try{const s=localStorage.getItem("sa-students");if(s)students=JSON.parse(s)}catch(e){}
+let sortKey="pct",sortDir=-1;
+const $=id=>document.getElementById(id);
+const save=()=>{try{localStorage.setItem("sa-students",JSON.stringify(students))}catch(e){}};
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const grade=p=>p>=90?"A+":p>=80?"A":p>=70?"B":p>=60?"C":p>=50?"D":p>=40?"E":"F";
+const calc=s=>{const t=s.m.reduce((a,b)=>a+b,0),pct=t/SUBJ.length;return{...s,t,pct,g:grade(pct),ok:s.m.every(x=>x>=PASS)}};
+
+function render(){
+  const d=students.map(calc);
+  const avg=d.length?d.reduce((a,s)=>a+s.pct,0)/d.length:0;
+  const top=d.length?[...d].sort((a,b)=>b.pct-a.pct)[0]:null;
+  const pr=d.length?Math.round(d.filter(s=>s.ok).length/d.length*100):0;
+  $("stats").innerHTML=[[d.length,"Students"],[avg.toFixed(1)+"%","Class average"],[top?esc(top.n):"-","Topper"],[pr+"%","Pass rate"]]
+    .map(([v,l])=>`<div class="stat"><b>${v}</b><span>${l}</span></div>`).join("");
+
+  const sa=SUBJ.map((_,i)=>d.length?d.reduce((a,s)=>a+s.m[i],0)/d.length:0);
+  // bar chart
+  const W=600,H=220,base=185,top0=20,bw=56,step=W/SUBJ.length;
+  let g='';
+  [0,50,100].forEach(v=>{const y=base-(base-top0)*v/100;g+=`<line x1="30" x2="${W}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="0" y="${y+4}">${v}</text>`});
+  sa.forEach((v,i)=>{
+    const h=(base-top0)*v/100,x=step*i+step/2-bw/2+10,low=v<PASS;
+    g+=`<rect x="${x}" y="${base-h}" width="${bw}" height="${h}" rx="6" fill="${low?"var(--bad)":"var(--accent)"}"/>`
+      +`<text x="${x+bw/2}" y="${base-h-6}" text-anchor="middle">${v.toFixed(0)}</text>`
+      +`<text x="${x+bw/2}" y="${base+18}" text-anchor="middle">${SUBJ[i]}</text>`;
+  });
+  $("chart").innerHTML=g;
+
+  // table
+  const cols=[["n","Name"],...SUBJ.map((s,i)=>["m"+i,s]),["t","Total"],["pct","%"],["g","Grade"],["ok","Result"]];
+  $("head").innerHTML=cols.map(([k,l])=>`<th data-k="${k}">${l}${k===sortKey?(sortDir>0?" ▲":" ▼"):""}</th>`).join("")+"<th></th>";
+  const val=(s,k)=>k[0]==="m"&&k.length===2?s.m[+k[1]]:s[k];
+  d.sort((a,b)=>{const x=val(a,sortKey),y=val(b,sortKey);return (x>y?1:x<y?-1:0)*sortDir});
+  $("rows").innerHTML=d.map(s=>`<tr><td>${esc(s.n)}</td>`
+    +s.m.map(x=>`<td class="${x<PASS?"low":""}">${x}</td>`).join("")
+    +`<td>${s.t}</td><td>${s.pct.toFixed(1)}</td><td>${s.g}</td>`
+    +`<td><span class="pill ${s.ok?"pass":"fail"}">${s.ok?"Pass":"Fail"}</span></td>`
+    +`<td><button class="ghost" data-del="${students.findIndex(o=>o.n===s.n&&o.m.join()===s.m.join())}" aria-label="Remove ${esc(s.n)}">Remove</button></td></tr>`).join("");
+  $("empty").hidden=d.length>0;
+}
+
+$("head").addEventListener("click",e=>{
+  const k=e.target.closest("th")?.dataset.k;if(!k)return;
+  sortDir=k===sortKey?-sortDir:(k==="n"?1:-1);sortKey=k;render();
+});
+$("rows").addEventListener("click",e=>{
+  const i=e.target.dataset.del;if(i===undefined)return;
+  students.splice(+i,1);save();render();
+});
+$("f").addEventListener("submit",e=>{
+  e.preventDefault();
+  const ins=[...e.target.querySelectorAll("input")],name=ins[0].value.trim();
+  const m=ins.slice(1).map(x=>Number(x.value));
+  if(!name){$("msg").textContent="Enter the student's name.";return}
+  if(m.some(x=>isNaN(x)||x<0||x>100)){$("msg").textContent="Marks must be between 0 and 100.";return}
+  if(students.some(s=>s.n.toLowerCase()===name.toLowerCase())){$("msg").textContent="That name is already in the list. Use a different name.";return}
+  $("msg").textContent="";
+  students.push({n:name,m});save();e.target.reset();render();
+});
+render();
+</script>
+</body>
+</html>
